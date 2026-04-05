@@ -10,7 +10,7 @@ tempo:
     trace:
       backend: s3
       s3:
-        bucket: lgtm-netperform-somt-2026
+        bucket: lgtm-stack-bucket
         endpoint: s3.ap-southeast-1.amazonaws.com
         region: ap-southeast-1
         insecure: false

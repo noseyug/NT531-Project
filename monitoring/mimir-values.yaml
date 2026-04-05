@@ -21,7 +21,7 @@ mimir:
     blocks_storage:
       backend: s3
       s3:
-        bucket_name: lgtm-netperform-somt-2026
+        bucket_name: lgtm-stack-bucket
         endpoint: s3.ap-southeast-1.amazonaws.com
         region: ap-southeast-1
         insecure: false

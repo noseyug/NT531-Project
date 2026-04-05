@@ -7,9 +7,9 @@ loki:
   storage:
     type: s3
     bucketNames: 
-      chunks: lgtm-netperform-somt-2026
-      ruler: lgtm-netperform-somt-2026
-      admin: lgtm-netperform-somt-2026
+      chunks: lgtm-stack-bucket
+      ruler: lgtm-stack-bucket
+      admin: lgtm-stack-bucket
     s3:
       region: ap-southeast-1
       s3ForcePathStyle: false
