@@ -1,6 +1,8 @@
 tempo:
   metricsGenerator:
     enabled: true
+    remoteWrite:
+      - url: http://mimir-gateway.lgtm.svc.cluster.local:80/api/v1/push
   memberlist:
     enabled: true
     abort_if_cluster_join_fails: false
@@ -10,7 +12,7 @@ tempo:
     trace:
       backend: s3
       s3:
-        bucket: lgtm-stack-bucket
+        bucket: lgtm-netperform-somt-2026
         endpoint: s3.ap-southeast-1.amazonaws.com
         region: ap-southeast-1
         insecure: false

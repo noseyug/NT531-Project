@@ -204,7 +204,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{namespace=\"bookinfo\"} |~ `(?i)(error|exception|warn|5[0-9]{2})`",
+          "expr": "{k8s_namespace_name=\"bookinfo\"} |~ `(?i)(error|exception|warn|5[0-9]{2})`",
           "queryType": "range",
           "refId": "A"
         }
@@ -223,7 +223,7 @@
         {
           "datasource": { "type": "tempo", "uid": "${DS_TEMPO}" },
           "queryType": "traceql",
-          "query": "{resource.service.name=~\"productpage|reviews\"} | duration > 500ms",
+          "query": "{resource.service.name=~\"productpage.*|reviews.*\" && duration > 500ms}",
           "tableType": "traces",
           "limit": 20,
           "refId": "A"
