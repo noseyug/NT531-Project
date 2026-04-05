@@ -1,0 +1,312 @@
+##################################################################################################
+# NAMESPACE & INSTRUMENTATION
+##################################################################################################
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bookinfo
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: bookinfo-instrumentation
+  namespace: bookinfo
+spec:
+  exporter:
+    # Dùng tên miền nội bộ chuẩn của K8s, không hardcode IP nữa cho "sạch"
+    endpoint: http://otel-collector-opentelemetry-collector.lgtm.svc.cluster.local:4317
+  sampler:
+    type: always_on
+---
+##################################################################################################
+# DETAILS SERVICE
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: details
+  namespace: bookinfo
+  labels:
+    app: details
+    service: details
+spec:
+  ports:
+  - port: 9080
+    name: http
+  selector:
+    app: details
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bookinfo-details
+  namespace: bookinfo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: details-v1
+  namespace: bookinfo
+  labels:
+    app: details
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: details
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: details
+        version: v1
+    spec:
+      serviceAccountName: bookinfo-details
+      containers:
+      - name: details
+        image: docker.io/istio/examples-bookinfo-details-v1:1.20.2
+        ports:
+        - containerPort: 9080
+        resources:
+          requests: { cpu: "10m", memory: "64Mi" }
+          limits: { cpu: "100m", memory: "128Mi" }
+---
+##################################################################################################
+# RATINGS SERVICE
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratings
+  namespace: bookinfo
+  labels:
+    app: ratings
+    service: ratings
+spec:
+  ports:
+  - port: 9080
+    name: http
+  selector:
+    app: ratings
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bookinfo-ratings
+  namespace: bookinfo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratings-v1
+  namespace: bookinfo
+  labels:
+    app: ratings
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratings
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: ratings
+        version: v1
+    spec:
+      serviceAccountName: bookinfo-ratings
+      containers:
+      - name: ratings
+        image: docker.io/istio/examples-bookinfo-ratings-v1:1.20.2
+        ports:
+        - containerPort: 9080
+        resources:
+          requests: { cpu: "10m", memory: "64Mi" }
+          limits: { cpu: "100m", memory: "128Mi" }
+---
+##################################################################################################
+# REVIEWS SERVICES
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews
+  namespace: bookinfo
+  labels:
+    app: reviews
+    service: reviews
+spec:
+  ports:
+  - port: 9080
+    name: http
+  selector:
+    app: reviews
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bookinfo-reviews
+  namespace: bookinfo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-v1
+  namespace: bookinfo
+  labels:
+    app: reviews
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v1
+      annotations:
+        instrumentation.opentelemetry.io/inject-java: "bookinfo-instrumentation"
+        instrumentation.opentelemetry.io/container-names: "reviews"
+    spec:
+      serviceAccountName: bookinfo-reviews
+      containers:
+      - name: reviews
+        image: docker.io/istio/examples-bookinfo-reviews-v1:1.20.2
+        ports:
+        - containerPort: 9080
+        resources:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits: { cpu: "300m", memory: "300Mi" }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-v2
+  namespace: bookinfo
+  labels:
+    app: reviews
+    version: v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v2
+      annotations:
+        instrumentation.opentelemetry.io/inject-java: "bookinfo-instrumentation"
+        instrumentation.opentelemetry.io/container-names: "reviews"
+    spec:
+      serviceAccountName: bookinfo-reviews
+      containers:
+      - name: reviews
+        image: docker.io/istio/examples-bookinfo-reviews-v2:1.20.2
+        ports:
+        - containerPort: 9080
+        resources:
+          requests: { cpu: "100m", memory: "128Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-v3
+  namespace: bookinfo
+  labels:
+    app: reviews
+    version: v3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v3
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v3
+      annotations:
+        instrumentation.opentelemetry.io/inject-java: "bookinfo-instrumentation"
+        instrumentation.opentelemetry.io/container-names: "reviews"
+    spec:
+      serviceAccountName: bookinfo-reviews
+      containers:
+      - name: reviews
+        image: docker.io/istio/examples-bookinfo-reviews-v3:1.20.2
+        ports:
+        - containerPort: 9080
+        resources:
+          requests: { cpu: "100m", memory: "128Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+---
+##################################################################################################
+# PRODUCTPAGE SERVICE (PYTHON)
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: productpage
+  namespace: bookinfo
+  labels:
+    app: productpage
+    service: productpage
+spec:
+  type: NodePort
+  ports:
+  - port: 9080
+    name: http
+    nodePort: 30080
+  selector:
+    app: productpage
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bookinfo-productpage
+  namespace: bookinfo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: productpage-v1
+  namespace: bookinfo
+  labels:
+    app: productpage
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: productpage
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: productpage
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9080"
+        prometheus.io/path: "/metrics"
+        instrumentation.opentelemetry.io/inject-python: "bookinfo-instrumentation"
+        instrumentation.opentelemetry.io/container-names: "productpage"
+    spec:
+      serviceAccountName: bookinfo-productpage
+      containers:
+      - name: productpage
+        image: docker.io/istio/examples-bookinfo-productpage-v1:1.20.2
+        ports:
+        - containerPort: 9080
+        resources:
+          requests: { cpu: "50m", memory: "128Mi" }
+          limits: { cpu: "200m", memory: "256Mi" }

@@ -1,0 +1,67 @@
+mode: daemonset
+
+image:
+  repository: "otel/opentelemetry-collector-contrib"
+
+presets:
+  logsCollection:
+    enabled: true
+service:
+  enabled: true
+
+ports:
+  otlp:
+    enabled: true
+    containerPort: 4317
+    servicePort: 4317
+    protocol: TCP
+  otlp-http:
+    enabled: true
+    containerPort: 4318
+    servicePort: 4318
+    protocol: TCP
+
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  processors:
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+    batch: {}
+
+  exporters:
+    otlphttp/loki:
+      endpoint: "http://loki.lgtm.svc.cluster.local:3100/otlp"
+      tls:
+        insecure: true
+    otlp/tempo:
+      endpoint: "tempo.lgtm.svc.cluster.local:4317"
+      tls:
+        insecure: true
+    otlphttp/mimir:
+      endpoint: "http://mimir-gateway.lgtm.svc.cluster.local:80/otlp"
+      tls:
+        insecure: true
+
+  service:
+    pipelines:
+      logs:
+        receivers: [filelog]
+        processors: [memory_limiter, batch]
+        exporters: [otlphttp/loki]
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [otlp/tempo]
+      metrics:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [otlphttp/mimir]

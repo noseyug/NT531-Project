@@ -1,0 +1,82 @@
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        uid: loki_uid
+        url: http://loki.lgtm.svc.cluster.local:3100
+        access: proxy
+        isDefault: false
+        jsonData:
+          derivedFields:
+            - name: TraceID
+              matcherRegex: '"traceid":"(\w+)"'
+              url: "${__value.raw}"
+              datasourceUid: tempo_uid
+            - name: TraceID_alt
+              matcherRegex: 'traceID=(\w+)'
+              url: "${__value.raw}"
+              datasourceUid: tempo_uid
+      - name: Tempo
+        type: tempo
+        uid: tempo_uid
+        url: http://tempo.lgtm.svc.cluster.local:3200
+        access: proxy
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: loki_uid
+            spanStartTimeShift: "-1m"
+            spanEndTimeShift: "1m"
+            filterByTraceID: true
+            filterBySpanID: false
+            customQuery: false
+          serviceMap:
+            datasourceUid: mimir_uid
+          nodeGraph:
+            enabled: true
+      - name: Mimir
+        type: prometheus
+        uid: mimir_uid
+        url: http://mimir-gateway.lgtm.svc.cluster.local:80/prometheus
+        access: proxy
+        isDefault: true
+
+alerting:
+  contactpoints.yaml:
+    apiVersion: 1
+    contactPoints:
+      - orgId: 1
+        name: Telegram
+        receivers:
+          - uid: telegram_1
+            type: telegram
+            settings:
+              bottoken: "{TOKEN}"
+              chatid: "{CHATID}"
+  policies.yaml:
+    apiVersion: 1
+    policies:
+      - orgId: 1
+        receiver: Telegram
+        group_by: ['alertname']
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'Thesis-Dashboards'
+        orgId: 1
+        folder: 'Performance Test'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+dashboards:
+  default:
+    infra-dashboard:
+      file: "./monitoring/grafana-features/Infrastructure-1774167916234.json"
+    red-dashboard:
+      file: "./monitoring/grafana-features/RED Method-1774167944531.json"

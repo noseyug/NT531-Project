@@ -1,0 +1,74 @@
+alertmanager: { enabled: false }
+ruler: { enabled: false }
+overrides_exporter: { enabled: false }
+
+query_scheduler:
+  enabled: true
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { cpu: 100m, memory: 128Mi }
+
+mimir:
+  structuredConfig:
+    multitenancy_enabled: false
+    ingester:
+      ring:
+        replication_factor: 1
+    store_gateway:
+      sharding_ring:
+        replication_factor: 1
+    blocks_storage:
+      backend: s3
+      s3:
+        bucket_name: lgtm-netperform-somt-2026
+        endpoint: s3.ap-southeast-1.amazonaws.com
+        region: ap-southeast-1
+        insecure: false
+    multitenancy_enabled: false
+
+distributor:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { cpu: 500m, memory: 500Mi }
+
+querier:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { cpu: 100m, memory: 256Mi }
+
+query_frontend:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { cpu: 100m, memory: 128Mi }
+
+compactor:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { cpu: 100m, memory: 128Mi }
+
+ingester:
+  replicas: 1
+  zoneAwareReplication: { enabled: false }
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 200m, memory: 512Mi }
+
+store_gateway:
+  replicas: 1
+  zoneAwareReplication: { enabled: false }
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits: { cpu: 100m, memory: 128Mi }
+
+minio:
+  enabled: false
+  mode: standalone
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 200m, memory: 256Mi }

@@ -1,0 +1,37 @@
+tempo:
+  metricsGenerator:
+    enabled: true
+  memberlist:
+    enabled: true
+    abort_if_cluster_join_fails: false
+    join_members:
+      - "127.0.0.1"
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: lgtm-netperform-somt-2026
+        endpoint: s3.ap-southeast-1.amazonaws.com
+        region: ap-southeast-1
+        insecure: false
+
+  ingester:
+    lifecycler:
+      ring:
+        replication_factor: 1
+      join_after: 0s
+      min_ready_duration: 0s
+      final_sleep: 0s
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 384Mi
+
+persistence:
+  enabled: true
+  storageClass: local-path
+  size: 2Gi

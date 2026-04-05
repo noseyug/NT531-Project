@@ -1,0 +1,8 @@
+server:
+  remoteWrite:
+    - url: http://mimir-gateway.lgtm.svc.cluster.local:80/api/v1/push
+  retention: 2h #Keep the last 2h data, long term storage depend on Mimir
+alertmanager:
+  enabled: false #Temporary turn off alert 
+prometheus-pushgateway:
+  enabled: false
