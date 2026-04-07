@@ -1,0 +1,40 @@
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  storage:
+    type: s3
+    bucketNames:
+      chunks: ${S3_BUCKET}
+      ruler:  ${S3_BUCKET}
+      admin:  ${S3_BUCKET}
+    s3:
+      region: ${AWS_REGION}
+      insecure: false
+      s3ForcePathStyle: false
+
+singleBinary:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m,  memory: 128Mi }
+    limits:   { cpu: 300m, memory: 384Mi }
+
+read:    { replicas: 0 }
+write:   { replicas: 0 }
+backend: { replicas: 0 }
+
+chunksCache:  { enabled: false }
+resultsCache: { enabled: false }
+lokiCanary:   { enabled: false }
+test:         { enabled: false }

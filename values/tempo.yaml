@@ -1,0 +1,47 @@
+service:
+  type: ClusterIP
+serviceMonitor:
+  enabled: false
+
+persistence:
+  enabled: true
+  storageClass: local-path
+  size: 2Gi
+
+resources:
+  requests: { cpu: 50m,  memory: 128Mi }
+  limits:   { cpu: 300m, memory: 384Mi }
+
+tempo:
+  receivers:
+    otlp:
+      protocols:
+        grpc: { endpoint: 0.0.0.0:4317 }
+        http:  { endpoint: 0.0.0.0:4318 }
+
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket:   ${S3_BUCKET}
+        endpoint: s3.${AWS_REGION}.amazonaws.com
+        region:   ${AWS_REGION}
+        insecure: false
+
+  memberlist:
+    enabled: true
+    abort_if_cluster_join_fails: false
+    join_members: ["127.0.0.1"]
+
+  ingester:
+    lifecycler:
+      join_after: 0s
+      min_ready_duration: 0s
+      final_sleep: 0s
+      ring:
+        replication_factor: 1
+
+  metricsGenerator:
+    enabled: true
+    remoteWrite:
+      - url: http://mimir-gateway.lgtm.svc.cluster.local:80/api/v1/push

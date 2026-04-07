@@ -1,0 +1,45 @@
+# Tắt các backends mặc định — dùng LGTM stack thay thế
+jaeger:     { enabled: false }
+opensearch: { enabled: false }
+prometheus: { enabled: false }
+
+grafana:
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
+
+opentelemetry-collector:
+  # Tắt hostPort để tránh conflict với LGTM collector trên cùng node
+  ports:
+    otlp:           { hostPort: 0 }
+    otlp-http:      { hostPort: 0 }
+    jaeger-compact: { hostPort: 0 }
+    jaeger-grpc:    { hostPort: 0 }
+    jaeger-thrift:  { hostPort: 0 }
+    zipkin:         { hostPort: 0 }
+
+  config:
+    exporters:
+      otlphttp/tempo:
+        endpoint: http://tempo.lgtm.svc.cluster.local:4318
+        tls: { insecure: true }
+      otlphttp/loki:
+        # Endpoint chỉ đến /otlp — collector tự append /v1/logs
+        endpoint: http://loki-gateway.lgtm.svc.cluster.local/otlp
+        tls: { insecure: true }
+      prometheusremotewrite/mimir:
+        endpoint: http://mimir-distributor.lgtm.svc.cluster.local:8080/api/v1/push
+        tls: { insecure: true }
+
+    service:
+      pipelines:
+        traces:
+          receivers:  [otlp]
+          exporters:  [otlphttp/tempo, debug]
+        logs:
+          receivers:  [otlp]
+          exporters:  [otlphttp/loki, debug]
+        metrics:
+          receivers:  [otlp, prometheus, kubeletstats]
+          exporters:  [prometheusremotewrite/mimir, debug]

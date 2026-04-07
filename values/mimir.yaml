@@ -1,0 +1,70 @@
+minio:          { enabled: false }
+alertmanager:   { enabled: false }
+ruler:          { enabled: false }
+overrides_exporter: { enabled: false }
+
+mimir:
+  structuredConfig:
+    multitenancy_enabled: false
+    blocks_storage:
+      backend: s3
+      s3:
+        bucket_name: ${S3_BUCKET}
+        endpoint:    s3.${AWS_REGION}.amazonaws.com
+        region:      ${AWS_REGION}
+        insecure: false
+    ingester:
+      ring:
+        replication_factor: 1
+    store_gateway:
+      sharding_ring:
+        replication_factor: 1
+    limits:
+      ingestion_rate:             100000
+      ingestion_burst_size:       200000
+      max_global_series_per_user: 500000
+
+distributor:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m,  memory: 64Mi  }
+    limits:   { cpu: 500m, memory: 500Mi }
+
+ingester:
+  replicas: 1
+  zoneAwareReplication: { enabled: false }
+  resources:
+    requests: { cpu: 50m,  memory: 256Mi }
+    limits:   { cpu: 200m, memory: 1Gi   }
+
+compactor:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi  }
+    limits:   { cpu: 100m, memory: 128Mi }
+
+store_gateway:
+  replicas: 1
+  zoneAwareReplication: { enabled: false }
+  resources:
+    requests: { cpu: 10m, memory: 64Mi  }
+    limits:   { cpu: 100m, memory: 128Mi }
+
+querier:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi  }
+    limits:   { cpu: 100m, memory: 256Mi }
+
+query_frontend:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi  }
+    limits:   { cpu: 100m, memory: 128Mi }
+
+query_scheduler:
+  enabled: true
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi  }
+    limits:   { cpu: 100m, memory: 128Mi }

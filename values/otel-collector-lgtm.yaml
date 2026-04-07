@@ -1,0 +1,70 @@
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+mode: daemonset
+service: { enabled: true }
+
+ports:
+  otlp:           { enabled: true,  containerPort: 4317, servicePort: 4317, protocol: TCP }
+  otlp-http:      { enabled: true,  containerPort: 4318, servicePort: 4318, protocol: TCP }
+  jaeger-compact: { enabled: false }
+  jaeger-grpc:    { enabled: false }
+  jaeger-thrift:  { enabled: false }
+  zipkin:         { enabled: false }
+
+presets:
+  logsCollection:       { enabled: true, includeCollectorLogs: false }
+  kubeletMetrics:       { enabled: false }
+  kubernetesAttributes: { enabled: true }
+
+config:
+  receivers:
+    # Xóa receivers mặc định không dùng
+    jaeger:    null
+    zipkin:    null
+    prometheus: null
+    otlp:
+      protocols:
+        grpc: { endpoint: 0.0.0.0:4317 }
+        http:  { endpoint: 0.0.0.0:4318 }
+    filelog:
+      include: [/var/log/pods/*/*/*.log]
+      exclude:
+        # Tránh đọc log của chính collector
+        - /var/log/pods/lgtm_otel-collector-opentelemetry-collector*_*/opentelemetry-collector/*.log
+        # Tránh duplicate: demo pods đã gửi logs qua OTLP
+        - /var/log/pods/demo_*/*.log
+
+  processors:
+    batch: {}
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+
+  exporters:
+    debug: null
+    otlp/tempo:
+      endpoint: tempo.lgtm.svc.cluster.local:4317
+      tls: { insecure: true }
+    otlphttp/loki:
+      endpoint: http://loki.lgtm.svc.cluster.local:3100/otlp
+      tls: { insecure: true }
+    prometheusremotewrite/mimir:
+      endpoint: http://mimir-gateway.lgtm.svc.cluster.local:80/api/v1/push
+      tls: { insecure: true }
+
+  service:
+    pipelines:
+      logs:
+        receivers:  [otlp, filelog]
+        processors: [memory_limiter, batch]
+        exporters:  [otlphttp/loki]
+      metrics:
+        receivers:  [otlp]
+        processors: [memory_limiter, batch]
+        exporters:  [prometheusremotewrite/mimir]
+      traces:
+        receivers:  [otlp]
+        processors: [memory_limiter, batch]
+        exporters:  [otlp/tempo]

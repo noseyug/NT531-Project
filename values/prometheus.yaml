@@ -1,0 +1,18 @@
+alertmanager:            { enabled: false }
+prometheus-pushgateway:  { enabled: false }
+kube-state-metrics:      { enabled: true  }
+prometheus-node-exporter: { enabled: true  }
+
+server:
+  # Chỉ giữ 2h vì toàn bộ metrics được remote write sang Mimir
+  retention: 2h
+  remoteWrite:
+    - url: http://mimir-gateway.lgtm.svc.cluster.local:80/api/v1/push
+
+serverFiles:
+  prometheus.yml:
+    scrape_configs:
+      - job_name: kube-state-metrics
+        static_configs:
+          - targets:
+              - prometheus-kube-state-metrics.lgtm.svc.cluster.local:8080
